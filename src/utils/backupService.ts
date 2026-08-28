@@ -1,6 +1,7 @@
 import type { AppSettings, BloodPressureReading } from '../types/bloodPressure';
 import { DEFAULT_SETTINGS } from '../services/storageService';
 import { getReadingValidationError } from './readingValidation';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 
 export const BACKUP_FORMAT = 'cta-elrocho-backup';
 export const BACKUP_VERSION = 1;
@@ -17,6 +18,18 @@ export type BackupParseResult =
   | { status: 'valid'; snapshot: AppBackupSnapshot }
   | { status: 'not-backup' }
   | { status: 'invalid'; reason: 'unsupported-version' | 'invalid-content' };
+
+interface FileSavePlugin {
+  saveJsonFile(options: { filename: string; content: string }): Promise<{ saved: boolean }>;
+}
+
+const FileSave = registerPlugin<FileSavePlugin>('FileSave');
+
+export interface BackupSaveResult {
+  filename: string;
+  mode: 'native' | 'web';
+  saved: boolean;
+}
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -198,14 +211,21 @@ function formatFilenameTimestamp(date: Date): string {
   return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
 }
 
-export function downloadBackup(
+export async function saveBackup(
   readings: BloodPressureReading[],
   settings: AppSettings,
   now = new Date()
-): string {
+): Promise<BackupSaveResult> {
   const snapshot = createBackupSnapshot(readings, settings, now.toISOString());
   const filename = `control_tension_backup_${formatFilenameTimestamp(now)}.cta-backup.json`;
-  const blob = new Blob([serializeBackup(snapshot)], { type: 'application/json;charset=utf-8;' });
+  const content = serializeBackup(snapshot);
+
+  if (Capacitor.getPlatform() === 'android') {
+    const result = await FileSave.saveJsonFile({ filename, content });
+    return { filename, mode: 'native', saved: result.saved };
+  }
+
+  const blob = new Blob([content], { type: 'application/json;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.setAttribute('href', url);
@@ -214,5 +234,5 @@ export function downloadBackup(
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
-  return filename;
+  return { filename, mode: 'web', saved: false };
 }

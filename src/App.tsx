@@ -20,7 +20,7 @@ import {
   processReadingsIntoSessions,
 } from './utils/whiteCoatAlgorithm';
 import { isBackupDue } from './utils/backupScheduler';
-import { downloadBackup, type AppBackupSnapshot } from './utils/backupService';
+import { saveBackup, type AppBackupSnapshot } from './utils/backupService';
 import { Header } from './components/Header';
 import { ReadingForm } from './components/ReadingForm';
 import { TrendChart } from './components/TrendChart';
@@ -111,17 +111,36 @@ export function App() {
     return result.addedCount;
   };
 
-  const handleTriggerManualBackup = () => {
+  const handleTriggerManualBackup = async () => {
     if (readings.length === 0) {
       alert(getTranslation(settings.language, 'toast.noDataToExport'));
       return;
     }
     const now = new Date();
     try {
-      downloadBackup(readings, settings, now);
+      const result = await saveBackup(readings, settings, now);
+      if (result.mode === 'native') {
+        if (!result.saved) {
+          setNotificationMsg(getTranslation(settings.language, 'toast.manualBackupCancelled'));
+          setTimeout(() => setNotificationMsg(null), 5000);
+          return;
+        }
+
+        const updatedSettings = {
+          ...settings,
+          lastBackupTimestamp: now.toISOString(),
+          lastFullBackupTimestamp: now.toISOString(),
+        };
+        handleUpdateSettings(updatedSettings);
+        setNotificationMsg(getTranslation(settings.language, 'toast.manualBackupSaved'));
+        setTimeout(() => setNotificationMsg(null), 5000);
+        return;
+      }
+
       setNotificationMsg({
-        message: getTranslation(settings.language, 'toast.manualBackupRequested'),
         actionLabel: getTranslation(settings.language, 'toast.confirmBackupSaved'),
+        cancelLabel: getTranslation(settings.language, 'toast.backupCancelledAction'),
+        variant: 'neutral',
         onAction: () => {
           const updatedSettings = {
             ...settings,
@@ -132,7 +151,7 @@ export function App() {
         },
       });
     } catch (error) {
-      console.error('Error al solicitar la descarga de la copia:', error);
+      console.error('Error al guardar la copia:', error);
       setNotificationMsg(getTranslation(settings.language, 'toast.manualBackupError'));
       setTimeout(() => setNotificationMsg(null), 5000);
     }
@@ -239,20 +258,24 @@ export function App() {
     >
       <div className="app-container">
         {notificationMsg && (
-          <div className="toast-modal-overlay" onClick={() => setNotificationMsg(null)}>
-            <div className="toast-notification" onClick={(e) => e.stopPropagation()}>
+          <div className={`toast-modal-overlay ${typeof notificationMsg === 'object' && notificationMsg.variant === 'neutral' ? 'neutral' : ''}`} onClick={() => setNotificationMsg(null)}>
+            <div className={`toast-notification ${typeof notificationMsg === 'object' && notificationMsg.variant === 'neutral' ? 'neutral' : ''}`} onClick={(e) => e.stopPropagation()}>
               <div className="toast-top-row">
-                <span className="toast-message-text">
-                  {typeof notificationMsg === 'string' ? notificationMsg : notificationMsg.message}
-                </span>
-                <button
-                  type="button"
-                  className="toast-close-btn"
-                  onClick={() => setNotificationMsg(null)}
-                  aria-label="Cerrar notificación"
-                >
-                  ×
-                </button>
+                {(typeof notificationMsg === 'string' || notificationMsg.message) && (
+                  <span className="toast-message-text">
+                    {typeof notificationMsg === 'string' ? notificationMsg : notificationMsg.message}
+                  </span>
+                )}
+                {(typeof notificationMsg === 'string' || !notificationMsg.cancelLabel) && (
+                  <button
+                    type="button"
+                    className="toast-close-btn"
+                    onClick={() => setNotificationMsg(null)}
+                    aria-label="Cerrar notificación"
+                  >
+                    ×
+                  </button>
+                )}
               </div>
 
               {typeof notificationMsg === 'object' && notificationMsg.actionLabel && notificationMsg.onAction && (
@@ -267,6 +290,15 @@ export function App() {
                   >
                     {notificationMsg.actionLabel}
                   </button>
+                  {notificationMsg.cancelLabel && (
+                    <button
+                      type="button"
+                      className="toast-cancel-btn"
+                      onClick={() => setNotificationMsg(null)}
+                    >
+                      {notificationMsg.cancelLabel}
+                    </button>
+                  )}
                 </div>
               )}
             </div>

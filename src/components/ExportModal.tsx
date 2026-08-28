@@ -29,9 +29,11 @@ import { useLanguage } from '../i18n/useLanguage';
 import { Share } from '@capacitor/share';
 
 export interface ToastNotification {
-  message: string;
+  message?: string;
   actionLabel?: string;
   onAction?: () => void;
+  cancelLabel?: string;
+  variant?: 'neutral';
 }
 
 type DataTab = 'backup' | 'import' | 'report';
@@ -48,7 +50,7 @@ interface ExportModalProps {
   onImportReadings: (readings: Omit<BloodPressureReading, 'id'>[]) => number | Promise<number>;
   onRestoreBackup: (snapshot: AppBackupSnapshot, mode: 'merge' | 'replace') => number | Promise<number>;
   onUpdateSettings: (settings: AppSettings) => void;
-  onTriggerManualBackup: () => void;
+  onTriggerManualBackup: () => void | Promise<void>;
   onNotify?: (toast: string | ToastNotification) => void;
 }
 
@@ -264,36 +266,23 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           {activeTab === 'backup' && (
             <div className="data-panel">
               <section className="backup-action-card">
-                <div className="backup-action-heading">
-                  <DatabaseBackup size={24} />
-                  <div>
-                    <h3>{t('data.createBackupTitle')}</h3>
-                    <p>{t('data.createBackupDescription')}</p>
-                  </div>
-                </div>
-
-                <div className="backup-status-grid">
-                  <div className="backup-status-item">
-                    <span>{t('data.readingsStored')}</span>
-                    <strong>{readings.length}</strong>
-                  </div>
-                  <div className="backup-status-item">
+                <div className="backup-create-row">
+                  <button type="button" className="btn-create-backup" onClick={onTriggerManualBackup} disabled={readings.length === 0}>
+                    <DatabaseBackup size={20} />
+                    {t('data.createBackupNow')}
+                  </button>
+                  <div className="backup-last-backup">
                     <span>{t('data.lastBackup')}</span>
                     <strong>{lastBackup}</strong>
                   </div>
                 </div>
-
-                <button type="button" className="btn-create-backup" onClick={onTriggerManualBackup} disabled={readings.length === 0}>
-                  <DatabaseBackup size={20} />
-                  {t('data.createBackupNow')}
-                </button>
 
                 <div className="modal-field backup-schedule-card">
                   <label className="field-label">
                     <Clock3 size={20} className="export-field-icon" />
                     <span>{t('data.scheduleTitle')}</span>
                   </label>
-                  <div className="chip-options-row">
+                  <div className="chip-options-row backup-frequency-options">
                     {(['disabled', 'daily', 'weekly', 'monthly'] as const).map((frequency) => (
                       <button
                         key={frequency}
@@ -305,22 +294,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                       </button>
                     ))}
                   </div>
-                  <div className="data-caveat">
-                    <AlertCircle size={17} />
-                    <span>{t('data.scheduleNotice')}</span>
-                  </div>
                 </div>
               </section>
 
               <section className="backup-action-card restore-backup-card">
-                <div className="backup-action-heading">
-                  <Upload size={24} />
-                  <div>
-                    <h3>{t('data.restoreBackupTitle')}</h3>
-                    <p>{t('data.restoreBackupDescription')}</p>
-                  </div>
-                </div>
-
                 <button type="button" className="btn-select-backup" onClick={openBackupFilePicker}>
                   <Upload size={20} />
                   {t('data.selectBackupFile')}
