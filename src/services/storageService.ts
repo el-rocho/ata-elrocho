@@ -10,6 +10,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   defaultArm: 'left',
   preferredInputMode: 'keyboard', // Por defecto teclado ('keyboard' / 'wheel')
   guidelineProfile: 'esc-2024',
+  showInformationalLabels: false,
   treatmentTargetMode: 'guideline',
   customTargetSystolicMin: 120,
   customTargetSystolicMax: 129,
@@ -255,7 +256,14 @@ export function getStoredSettings(): AppSettings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (!raw) return DEFAULT_SETTINGS;
-    const parsed = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    const stored = JSON.parse(raw);
+    const parsed = {
+      ...DEFAULT_SETTINGS,
+      ...stored,
+      showInformationalLabels: typeof stored.showInformationalLabels === 'boolean'
+        ? stored.showInformationalLabels
+        : true,
+    };
     if (!['es', 'en'].includes(parsed.language)) {
       parsed.language = 'es';
     }

@@ -82,7 +82,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   const handleGuidelineChange = (guidelineProfile: GuidelineProfile) => {
-    onUpdateSettings({ ...settings, guidelineProfile });
+    onUpdateSettings({ ...settings, guidelineProfile, showInformationalLabels: true });
   };
 
   const handlePatientSexChange = (sex: PatientSex) => {
@@ -233,10 +233,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <BookOpenCheck size={22} className="text-blue settings-field-icon" />
               <span>{t('settings.guidelineTitle')}</span>
             </div>
-            <p className="settings-desc" style={{ marginBottom: '10px' }}>
-              {t('settings.guidelineDesc')}
-            </p>
             <div className="guideline-options">
+              <div className={`guideline-option ${!settings.showInformationalLabels ? 'active' : ''}`}>
+                <button
+                  type="button"
+                  className="guideline-select-button"
+                  onClick={() => onUpdateSettings({ ...settings, showInformationalLabels: false })}
+                >
+                  <strong>{t('settings.guidelineNone')}</strong>
+                </button>
+              </div>
               {([
                 ['esc-2024', 'settings.guidelineEsc'],
                 ['aha-acc-2025', 'settings.guidelineAha'],
@@ -244,7 +250,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               ] as const).map(([profile, labelKey]) => (
                 <div
                   key={profile}
-                  className={`guideline-option ${settings.guidelineProfile === profile ? 'active' : ''}`}
+                  className={`guideline-option ${settings.showInformationalLabels && settings.guidelineProfile === profile ? 'active' : ''}`}
                 >
                   <button
                     type="button"
@@ -371,6 +377,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
 
               <div className="settings-toggle-actions">
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={settings.enableWhiteCoatFilter}
+                    onChange={handleToggleWhiteCoat}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
                 <button
                   type="button"
                   className="settings-info-button"
@@ -380,14 +394,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 >
                   <Info size={15} />
                 </button>
-                <label className="toggle-switch">
-                  <input
-                    type="checkbox"
-                    checked={settings.enableWhiteCoatFilter}
-                    onChange={handleToggleWhiteCoat}
-                  />
-                  <span className="toggle-slider"></span>
-                </label>
               </div>
             </div>
 

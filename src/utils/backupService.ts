@@ -103,6 +103,9 @@ function normalizeSettings(value: unknown): AppSettings | null {
     Object.entries(value).filter(([, settingValue]) => settingValue !== null)
   );
   const candidate = { ...DEFAULT_SETTINGS, ...legacyValues } as AppSettings;
+  candidate.showInformationalLabels = typeof legacyValues.showInformationalLabels === 'boolean'
+    ? legacyValues.showInformationalLabels
+    : true;
 
   if (typeof candidate.patientAge === 'string' && candidate.patientAge.trim() !== '') {
     const numericAge = Number(candidate.patientAge);
@@ -118,6 +121,7 @@ function normalizeSettings(value: unknown): AppSettings | null {
   if (candidate.defaultArm !== 'left' && candidate.defaultArm !== 'right') return null;
   if (candidate.preferredInputMode !== 'keyboard' && candidate.preferredInputMode !== 'wheel') return null;
   if (!['esc-2024', 'aha-acc-2025', 'ish-2020'].includes(candidate.guidelineProfile)) return null;
+  if (typeof candidate.showInformationalLabels !== 'boolean') return null;
   if (candidate.treatmentTargetMode !== 'guideline' && candidate.treatmentTargetMode !== 'custom') return null;
   if (![candidate.customTargetSystolicMin, candidate.customTargetSystolicMax, candidate.customTargetDiastolicMin, candidate.customTargetDiastolicMax].every(Number.isFinite)) return null;
   if (candidate.patientName !== undefined && typeof candidate.patientName !== 'string') return null;

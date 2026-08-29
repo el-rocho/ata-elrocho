@@ -132,12 +132,12 @@ body {
 }
 
 .btn-submit-reading.is-saved {
-  animation: readingSavedPulse 0.65s ease both;
+  animation: readingSavedPulse 0.9s ease both;
 }
 
 @keyframes readingSavedPulse {
-  0%, 100% { transform: scale(1); }
-  45% { transform: scale(1.018); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.12); }
+  0%, 100% { transform: scale(1); background: linear-gradient(135deg, #10b981, #059669); }
+  45% { transform: scale(1.012); background: linear-gradient(135deg, #ef8b8b, #dc6b6b); box-shadow: 0 0 0 5px rgba(220, 107, 107, 0.12); }
 }
 
 .edit-label-compact {
@@ -4164,7 +4164,7 @@ input:checked + .toggle-slider:before {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 12px;
   margin: 6px 0 14px;
   padding: 10px 14px;
@@ -4174,10 +4174,10 @@ input:checked + .toggle-slider:before {
 }
 
 .cardiovascular-metric {
-  flex: 1 1 0px;
+  flex: 0 1 auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
   padding: 2px 6px;
   color: var(--text-secondary);
@@ -4359,6 +4359,12 @@ input:checked + .toggle-slider:before {
 .session-info-line,
 .breakdown-info-text {
   overflow-wrap: anywhere;
+}
+
+.cardiovascular-metric .metric-inline {
+  color: var(--text-secondary);
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .session-date-short {

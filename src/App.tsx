@@ -15,10 +15,7 @@ import {
   replaceStoredData,
   clearAllStoredData,
 } from './services/storageService';
-import {
-  getSessionSummaryReading,
-  processReadingsIntoSessions,
-} from './utils/whiteCoatAlgorithm';
+import { processReadingsIntoSessions } from './utils/whiteCoatAlgorithm';
 import { isBackupDue } from './utils/backupScheduler';
 import { saveBackup, type AppBackupSnapshot } from './utils/backupService';
 import { Header } from './components/Header';
@@ -251,11 +248,6 @@ export function App() {
     setReadings(updated);
   };
 
-  const lastReading = useMemo(
-    () => (sessions.length > 0 ? getSessionSummaryReading(sessions[0]) : null),
-    [sessions]
-  );
-
   return (
     <LanguageProvider
       language={settings.language}
@@ -325,7 +317,6 @@ export function App() {
           onAddReading={handleAddReading}
           settings={settings}
           onUpdateInputMode={handleUpdateInputMode}
-          lastReading={lastReading}
           readings={readings}
         />
 
